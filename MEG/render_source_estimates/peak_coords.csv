@@ -1,0 +1,17 @@
+condition,feature,hemisphere,power,x,y,z
+tonal,pitch,right,4.27071070920274e-24,56,-20,4
+tonal,pitch,left,3.47969847234147e-24,-70,-36,4
+tonal,intensity,right,8.96313734286725e-24,56,-28,4
+tonal,intensity,left,6.71816747106886e-24,-64,-36,4
+tonal,timbre,right,4.28470843605988e-24,56,-24,-4
+tonal,timbre,left,4.40085715019568e-24,-64,-44,12
+tonal,location,right,7.5061478479746e-24,56,-32,4
+tonal,location,left,5.27968434035775e-24,-64,-36,4
+atonal,pitch,right,3.25627730678057e-24,48,-68,-12
+atonal,pitch,left,3.16497320651921e-24,-58,-66,12
+atonal,intensity,right,8.30141983519994e-24,56,-24,-4
+atonal,intensity,left,7.15607909305791e-24,-64,-28,12
+atonal,timbre,right,5.2144873406226e-24,56,-28,4
+atonal,timbre,left,5.02984722405835e-24,-66,-44,4
+atonal,location,right,7.37649214772949e-24,56,-32,4
+atonal,location,left,5.3563852255361e-24,-70,-36,4

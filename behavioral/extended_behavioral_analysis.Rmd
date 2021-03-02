@@ -1,0 +1,216 @@
+---
+title: "extended  behavioral analysis"
+author: "David R. Quiroga-Martinez"
+date: "5 feb 2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE)
+```
+
+In this document, we show the results of a full analysis including all participants of the behavioral study. 
+
+Let's load the required libraries:
+
+```{r message=FALSE, warning=FALSE}
+library(reshape2)
+library(MASS)
+library(lme4)
+library(effects)
+library(ggplot2)
+library(viridis)
+library(RColorBrewer)
+library(ordinal)
+library(cowplot)
+library(kableExtra)
+library(knitr)
+library(broom)
+library(broom.mixed)
+library(dplyr)
+```
+
+Now, load the data:
+
+```{r}
+d <- read.table('clean_data/dataset.csv', header = T, sep = ',') # load data
+
+## To reproduce the original analyses with the stricter inclusion criteria 
+## (39 participants) uncomment these lines to select the subjects:
+
+# d <- d[d$prof < 2,] # self-declared as non-musicians
+# d <- d[d$yomt < 4,] # less than 4 years of musical training
+# d <- d[d$somt > 9|d$somt ==0,] # started musical traingin at 10 or older
+```
+
+After calculating d-prime scores (see Rmd script for the code), we run a t-test on them:
+```{r message=FALSE, warning=FALSE, echo = F}
+
+# Calculate d-prime scores:
+dprov <- aggregate(d$acc,by=list(d$cond,d$deviance,d$dev,d$sub),sum)
+dprov <- cbind(aggregate(d[,c("age","yomt","somt","prof","style")],
+               by=list(d$cond,d$deviance,d$dev,d$sub),mean),dprov$x)
+colnames(dprov)[c(1:4,10)] <- c("cond","deviance","dev","sub","x")
+dprov$x <- dprov$x/12
+dprov$x[dprov$x == 1] <- 1 - 1/24
+dprov$x[dprov$x == 0] <- 1/24
+dprime.t <- dprov[dprov$cond == 'tonal' & dprov$dev == 2,]
+dprime.a <-  dprov[dprov$cond == 'atonal' & dprov$dev == 2,]
+
+dprime.t$d <- qnorm(dprov$x[dprov$cond == 'tonal' & dprov$dev == 1]) - 
+              qnorm(1- dprov$x[dprov$cond == 'tonal' & dprov$dev == 2])
+dprime.t$c <- -(qnorm(dprov$x[dprov$cond == 'tonal' & dprov$dev == 1]) + 
+              qnorm(1- dprov$x[dprov$cond == 'tonal' & dprov$dev == 2]))/2
+dprime.a$d <- qnorm(dprov$x[dprov$cond == 'atonal' & dprov$dev == 1]) - 
+              qnorm(1- dprov$x[dprov$cond == 'atonal' & dprov$dev == 2])
+dprime.a$c <- -(qnorm(dprov$x[dprov$cond == 'atonal' & dprov$dev == 1]) + 
+               qnorm(1- dprov$x[dprov$cond == 'atonal' & dprov$dev == 2]))/2
+
+dprime <- rbind(dprime.a,dprime.t)
+dprime <- dprime[,-which(colnames(dprime) == "x")]
+dprime$cond <- factor(dprime$cond,levels= c('tonal','atonal'))
+d$cond <- factor(d$cond,levels= c('tonal','atonal'))
+```
+
+```{r}
+t.d <- t.test(d~cond, data= dprime, paired = T)
+kable(tidy(t.d)%>%mutate_if(is.numeric,round,3))
+
+```
+
+
+The results show a clear effect of condition on d-prime scores. Now we run another t-test for criterion scores:
+
+```{r}
+t.cr <- t.test(c~cond, data= dprime, paired = T)
+kable(tidy(t.cr)%>%mutate_if(is.numeric,round,3))
+
+```
+
+
+The results show no significant effect of condition on criterion scores. Now we fit a (full) cummulative link mixed model of confidence ratings with the two factors and their interaction:
+
+```{r}
+conf <- clmm(as.factor(conf)~cond*deviance + (1|sub), data = d, link = "logit")
+```
+
+We inspect the parameters (odds ratios) of the model and the p-values:
+```{r}
+kable(tidy(conf,conf.int=T, conf.level = 0.95,exponentiate = T) %>%
+        select(-c('std.error','coefficient_type')) %>%
+        mutate_if(is.numeric,round,3))
+```
+
+
+The results show that participants were less confident in the atonal condition. There was a condition*deviance interaction meaning that participants gave particularly lower ratings to the standard melodies in the atonal condition.
+
+Given this result, now we explore whether the same interaction can be seen for deviance detection. We therefore run a logistic regression on accuracy, with condition (tonal/atonal), deviance (standard/deviant) and their interaction as predictors.
+```{r}
+lr <- glmer(acc~cond*deviance+(1|sub),data=d,
+            family=binomial(link = "logit"))
+
+kable(tidy(lr,conf.int=T, conf.level = 0.95,exponentiate = T) %>%
+        select(-c('std.error','effect','group')) %>%
+        mutate_if(is.numeric,round,3))
+```
+
+
+Notably, the same interaction can be seen here. Participants were less accurate in atonal melodies, and more so when the melody was a standard. Nevertheless, note that accuracy was already lower for deviant melodies.
+
+Finally, we make the corresponding plots (se Rmd script for the full code)
+```{r message=FALSE, warning=FALSE, echo = F}
+# get individual proportions for confidence ratings from raw data:
+ind.prop <- aggregate(as.factor(d$conf),by=list(d$sub,d$cond,d$deviance), FUN = table)
+ind.prop <- cbind(ind.prop[1:3],ind.prop$x[,]/rowSums(ind.prop$x[,]))
+colnames(ind.prop) <- c("sub","cond","deviance",as.character(1:7))
+ind.prop <- melt(ind.prop, id.vars = list("sub","cond","deviance"))
+colnames(ind.prop)[4:5] <- c("intercept","probability")
+ind.prop$cond <- factor(ind.prop$cond, levels = c('tonal','atonal'))
+
+# get estimates from confidence model
+e.conf <- as.data.frame(allEffects(conf,confint = TRUE)[[1]])
+e.conf.long <- melt(e.conf, id.vars = c("cond","deviance"))
+e.conf.long$intercept <-  sapply(as.character(e.conf.long$variable),
+                                function(x) substr(x,nchar(x),nchar(x)))
+e.conf.long$measure <-  sapply(as.character(e.conf.long$variable),
+                              function(x) substr(x,1,nchar(x)-3))
+e.conf.long <- dcast(e.conf.long,cond+intercept+deviance~measure)
+e.conf.long$cond <- factor(e.conf.long$cond, levels = c('tonal','atonal'))
+
+#dprime plotting
+d.plot <- ggplot(dprime, aes( x = cond, y= d, fill = cond))+ 
+  geom_point(size=3, alpha = 0.1, col = 'black',show.legend = F)+
+  geom_line(aes(group = sub),col="black",alpha=0.2)+
+  geom_boxplot(alpha = 0.5,
+               color = 'black', width = 0.2, show.legend = F) +
+  geom_violin(color = 'black', size = 1, show.legend = F,
+              alpha = 0,trim = FALSE) +
+  scale_fill_manual(values = (c('red','blue'))) +
+  theme_bw() +
+  labs(x = "Condition",y = "Sensitivity (d')");#d.plot
+
+#criterion plotting
+c.plot <- ggplot(dprime, aes( x = cond, y= c, fill = cond))+
+  geom_point(size=3, alpha = 0.1, col = 'black',show.legend = F)+
+  geom_line(aes(group = sub),col="black",alpha=0.2)+
+  geom_boxplot(alpha = 0.5,
+               color = 'black', width = 0.2, show.legend = F) +
+  geom_violin(color = 'black', size = 1, show.legend = F,
+              alpha = 0,trim = FALSE) +
+  scale_fill_manual(values = (c('red','blue'))) +
+  theme_bw() +
+  labs(x = "Condition",y = "Bias (c)");#c.plot
+
+#barplot confidence
+conf.plot1 <-ggplot(d, aes(x=cond, fill = as.character(conf))) +
+  geom_bar(position = "fill")+
+  labs(x="", fill = "Confidence",y="Percentage")+
+  facet_wrap(~deviance, labeller=labeller(deviance = 
+                                            c("dev" = " deviant melody",
+                                              "std" = " regular melody")))+
+  scale_fill_viridis(discrete = TRUE) +
+  theme_bw() + 
+  theme(legend.position= 'right',legend.box.spacing = unit(x=0.01,units ='npc'),
+        legend.title = element_text(angle = -90)) + 
+  guides(fill = guide_legend(ncol=1,title.position = 'right',title.hjust = 0.5,keywidth = 0.8,
+                             label.position ='right')) +
+  xlab('Condition') +
+  ylab('Cumulative proportion');# conf.plot1
+
+# proportions confidence
+conf.plot2 <- ggplot(e.conf.long,aes(x= as.numeric(intercept), y = prob, color = cond, shape = cond)) +
+  geom_line(position = position_dodge(width = 0.45),size = 0.5) +
+  geom_point(position = position_dodge(width = 0.45),size = 2) +
+  geom_errorbar(aes(ymin = prob - se.prob, ymax = prob + se.prob), 
+                width=0.4,alpha = 0.4, size = 0.5,
+                position= position_dodge(width = 0.45)) +
+  geom_point(data = ind.prop,aes(as.numeric(intercept),y=probability), alpha = 0.05,
+             position = position_jitterdodge(dodge.width = 0.45,jitter.height = 0,
+                                             jitter.width = 0.2)) +
+  scale_color_manual(values = (c('red','blue'))) +
+  ylab('Probability of response') +
+  xlab('Confidence') +
+  ylim(c(0,0.5)) +
+  facet_wrap(~deviance, labeller=labeller(deviance = 
+                                            c("dev" = " deviant melody",
+                                              "std" = " regular melody"))) +
+  theme_bw() +
+  theme(legend.position = c(0.2,0.9),legend.title = element_blank(),
+        legend.background = element_rect(fill = F)) +
+  scale_x_continuous(breaks=c(1:7));#conf.plot2
+
+
+```
+
+```{r}
+plots <- align_plots(d.plot,c.plot,conf.plot2,conf.plot1,align = 'v',axis ='1')
+joint_plots <- plot_grid(plots[[1]],plots[[2]],plots[[3]],plots[[4]],
+                         labels = c('A','B','C','D'), ncol =2,nrow =2)
+ggsave("joint_plots_extended.png", plot=joint_plots,width = 180, height = 180,
+       units = 'mm', dpi = 600)
+joint_plots
+```
+
+
+
+
