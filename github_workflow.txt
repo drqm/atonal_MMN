@@ -1,0 +1,12 @@
+## Typical github workflow
+
+git clone github.address # copy a new repository online
+git pull origin master # download latest changes from repository
+git status #check status of github files
+git add . # add all files that changed
+git add myfile.xx # add specific file
+git commit -m "message describing the changes" # commit the changes that you have made
+git push origin master # synchronize  your changes with online repository
+
+
+
