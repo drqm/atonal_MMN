@@ -139,24 +139,26 @@ e.conf.long$cond <- factor(e.conf.long$cond, levels = c('tonal','atonal'))
 
 #dprime plotting
 d.plot <- ggplot(dprime, aes( x = cond, y= d, fill = cond))+ 
-  geom_point(size=3, alpha = 0.1, col = 'black',show.legend = F)+
-  geom_line(aes(group = sub),col="black",alpha=0.2)+
-  geom_boxplot(alpha = 0.5,
-               color = 'black', width = 0.2, show.legend = F) +
-  geom_violin(color = 'black', size = 1, show.legend = F,
-              alpha = 0,trim = FALSE) +
+  geom_point(size=1.5, alpha = 0.4,col = 'black',show.legend = F)+
+  geom_line(aes(group = sub),col="black",alpha=0.5,size = 0.2)+
+  geom_boxplot(alpha = 0.6,fatten = 0.9, lwd = 0.25,
+               color = 'black', width = 0.15, outlier.size = 0.4,
+               show.legend = F) +
+  geom_violin(color = 'black',show.legend = F,lwd = 0.5,
+              alpha = 0,trim = FALSE, size = 0.15) +
   scale_fill_manual(values = (c('red','blue'))) +
   theme_bw() +
   labs(x = "Condition",y = "Sensitivity (d')");#d.plot
 
 #criterion plotting
 c.plot <- ggplot(dprime, aes( x = cond, y= c, fill = cond))+
-  geom_point(size=3, alpha = 0.1, col = 'black',show.legend = F)+
-  geom_line(aes(group = sub),col="black",alpha=0.2)+
-  geom_boxplot(alpha = 0.5,
-               color = 'black', width = 0.2, show.legend = F) +
-  geom_violin(color = 'black', size = 1, show.legend = F,
-              alpha = 0,trim = FALSE) +
+  geom_point(size=1.5, alpha = 0.4, col = 'black',show.legend = F)+
+  geom_line(aes(group = sub),col="black",alpha=0.5,size = 0.2)+
+  geom_boxplot(alpha = 0.6,fatten = 0.9, lwd = 0.25,
+               color = 'black', width = 0.15, outlier.size = 0.4,
+               show.legend = F) +
+  geom_violin(color = 'black',show.legend = F,lwd = 0.5,
+              alpha = 0,trim = FALSE, size = 0.15) +
   scale_fill_manual(values = (c('red','blue'))) +
   theme_bw() +
   labs(x = "Condition",y = "Bias (c)");#c.plot
@@ -205,7 +207,7 @@ conf.plot2 <- ggplot(e.conf.long,aes(x= as.numeric(intercept), y = prob, color =
 ```{r}
 plots <- align_plots(d.plot,c.plot,conf.plot2,conf.plot1,align = 'v',axis ='1')
 joint_plots <- plot_grid(plots[[1]],plots[[2]],plots[[3]],plots[[4]],
-                         labels = c('A','B','C','D'), ncol =2,nrow =2)
+                         labels = c('a','b','c','d'), ncol =2,nrow =2)
 ggsave("joint_plots.png", plot=joint_plots,width = 180, height = 180,
        units = 'mm', dpi = 600)
 joint_plots

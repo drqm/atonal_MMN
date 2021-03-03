@@ -1,4 +1,4 @@
-setwd("C:/Users/au571303/Documents/projects/atonal_mumufe_beh/")
+setwd("C:/Users/au571303/Documents/projects/atonal_MMN/IDyOM/")
 library(ggplot2)
 #library(gridExtra)
 library(patchwork)
@@ -32,7 +32,7 @@ colnames(d_agg)[1:2] <- c('condition','corpus')
 d_agg$corpus <- factor(d_agg$corpus, levels = c("no corpus", "atonal corpus", "tonal corpus"))
 eplot <- ggplot(d_agg, aes(condition,entropy)) +
   geom_jitter(width = 0.01, size = 2, alpha = 0.4, color = 'black') +
-  geom_boxplot(alpha = 0.2, width = 0.4, aes(fill = condition)) +
+  geom_boxplot(alpha = 0.7, width = 0.4, aes(fill = condition)) +
   scale_fill_manual(values = c('blue','red')) + 
   facet_wrap(~corpus) +
   theme_bw() +
@@ -41,7 +41,7 @@ eplot <- ggplot(d_agg, aes(condition,entropy)) +
 
 ic.plot <- ggplot(d_agg, aes(condition,information.content)) +
   geom_jitter(width = 0.02, size = 2, alpha = 0.5, color = 'black') +
-  geom_boxplot(alpha = 0.2, width = 0.4, aes(fill = condition)) +
+  geom_boxplot(alpha = 0.7, width = 0.4, aes(fill = condition)) +
   scale_fill_manual(values = c('blue','red')) + 
   facet_wrap(~corpus) +
   theme_bw() +
@@ -51,7 +51,7 @@ ic.plot <- ggplot(d_agg, aes(condition,information.content)) +
 notes = c('C','C#','D','D#','E','F','F#','G','G#','A','A#','B')
 pdists <- ggplot(d) +  
   geom_histogram(aes(x = cpitch, y = ..density.. , fill = stim_type),
-                 binwidth = 1,alpha = 0.4, color ='black') + 
+                 binwidth = 1,alpha = 0.7, color ='black') + 
   scale_fill_manual(values = c('blue','red')) + 
   facet_wrap(~stim_type) + 
   xlab('pitch class') +
