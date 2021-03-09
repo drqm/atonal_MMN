@@ -14,7 +14,6 @@ load('anatomy_labels')
 % info = readtable('ROI_MNI_V7_vol.txt');
 
 % cpos = grand_avg_sources.tonal.pitch.std.pos;
-% origin = [45 63 36];
 % cpos(:,1) = origin(1)-cpos(:,1)/2;
 % cpos(:,2) = cpos(:,2)/2 + origin(2);
 % cpos(:,3) = cpos(:,3)/2 + origin(3);

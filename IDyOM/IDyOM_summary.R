@@ -68,4 +68,6 @@ pdists <- ggplot(d) +
 
 ic.plots <- (eplot + ic.plot) / pdists + plot_annotation(tag_levels = 'a');ic.plots
 ggsave("Fig2-IC_plots.png", plot=ic.plots,width = 180, height = 180, units = 'mm', dpi = 600)
+ggsave("Fig2-IC_plots.pdf", plot=ic.plots,width = 180, height = 180, units = 'mm', dpi = 600)
+
 

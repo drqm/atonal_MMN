@@ -210,6 +210,8 @@ joint_plots <- plot_grid(plots[[1]],plots[[2]],plots[[3]],plots[[4]],
                          labels = c('a','b','c','d'), ncol =2,nrow =2)
 ggsave("joint_plots.png", plot=joint_plots,width = 180, height = 180,
        units = 'mm', dpi = 600)
+ggsave("joint_plots.pdf", plot=joint_plots,width = 180, height = 180,
+       units = 'mm', dpi = 600)
 joint_plots
 
 ```
